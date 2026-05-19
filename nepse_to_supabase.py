@@ -24,7 +24,7 @@ if not SUPABASE_URL or not SUPABASE_KEY:
     sys.exit(1)
 
 # ── NEPSE public API ──────────────────────────────────────────────────────────
-NEPSE_API_URL = "https://www.nepalstock.com.np/api/nots/market/export/todays-price/58"
+NEPSE_API_URL = "https://www.nepalstock.com.np/api/nots/market/export/todays-price"
 
 HEADERS = {
     "User-Agent": "Mozilla/5.0 (compatible; NEPSE-Fetcher/1.0)",
