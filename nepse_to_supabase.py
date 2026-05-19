@@ -6,13 +6,9 @@ Credentials are read from environment variables (set as GitHub Secrets).
 
 import os
 import sys
-import requests
-import urllib3
 from datetime import date
+from nepse import Nepse
 from supabase import create_client, Client
-
-# NEPSE uses a certificate not in standard CA bundles — suppress the warning
-urllib3.disable_warnings(urllib3.exceptions.InsecureRequestWarning)
 
 # ── Credentials from environment (GitHub Secrets) ────────────────────────────
 SUPABASE_URL = os.environ.get("SUPABASE_URL")
@@ -22,15 +18,6 @@ TABLE_NAME   = "nepse_daily_prices"
 if not SUPABASE_URL or not SUPABASE_KEY:
     print("❌ ERROR: SUPABASE_URL and SUPABASE_KEY must be set as environment variables.")
     sys.exit(1)
-
-# ── NEPSE public API ──────────────────────────────────────────────────────────
-NEPSE_API_URL = "https://www.nepalstock.com/today-price"
-
-HEADERS = {
-    "User-Agent": "Mozilla/5.0 (compatible; NEPSE-Fetcher/1.0)",
-    "Accept": "application/json",
-    "Referer": "https://www.nepalstock.com.np/",
-}
 
 # ── Field mapping: NEPSE API key → Supabase column ───────────────────────────
 COLUMN_MAP = {
@@ -57,12 +44,11 @@ COLUMN_MAP = {
 
 def fetch_nepse_prices() -> list[dict]:
     print(f"📡 Fetching NEPSE prices for {date.today()}...")
-    resp = requests.get(NEPSE_API_URL, headers=HEADERS, timeout=30, verify=False)
-    resp.raise_for_status()
-    data = resp.json()
-    items = data.get("content", data) if isinstance(data, dict) else data
+    nepse = Nepse()
+    nepse.setTLSVerification(False)  # NEPSE has an incomplete SSL cert chain
+    items = nepse.getTodayPrice()
     if not isinstance(items, list):
-        raise ValueError(f"Unexpected response format: {type(data)}")
+        raise ValueError(f"Unexpected response format: {type(items)}")
     print(f"✅ Fetched {len(items)} records")
     return items
 
