@@ -7,9 +7,12 @@ Credentials are read from environment variables (set as GitHub Secrets).
 import os
 import sys
 import requests
-import certifi
+import urllib3
 from datetime import date
 from supabase import create_client, Client
+
+# NEPSE uses a certificate not in standard CA bundles — suppress the warning
+urllib3.disable_warnings(urllib3.exceptions.InsecureRequestWarning)
 
 # ── Credentials from environment (GitHub Secrets) ────────────────────────────
 SUPABASE_URL = os.environ.get("SUPABASE_URL")
@@ -54,7 +57,7 @@ COLUMN_MAP = {
 
 def fetch_nepse_prices() -> list[dict]:
     print(f"📡 Fetching NEPSE prices for {date.today()}...")
-    resp = requests.get(NEPSE_API_URL, headers=HEADERS, timeout=30, verify=certifi.where())
+    resp = requests.get(NEPSE_API_URL, headers=HEADERS, timeout=30, verify=False)
     resp.raise_for_status()
     data = resp.json()
     items = data.get("content", data) if isinstance(data, dict) else data
