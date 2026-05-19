@@ -46,7 +46,7 @@ def fetch_nepse_prices() -> list[dict]:
     print(f"📡 Fetching NEPSE prices for {date.today()}...")
     nepse = Nepse()
     nepse.setTLSVerification(False)  # NEPSE has an incomplete SSL cert chain
-    items = nepse.getTodayPrice()
+    items = nepse.getPriceVolumeHistory()
     if not isinstance(items, list):
         raise ValueError(f"Unexpected response format: {type(items)}")
     print(f"✅ Fetched {len(items)} records")
