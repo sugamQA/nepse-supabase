@@ -1,1 +1,2 @@
 # nepse-supabase
+Autosync Data
