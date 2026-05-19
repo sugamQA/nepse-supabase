@@ -8,6 +8,7 @@ import os
 import sys
 from datetime import date
 from nepse import Nepse
+from nepse.Errors import NepseInvalidClientRequest
 from supabase import create_client, Client
 
 # ── Credentials from environment (GitHub Secrets) ────────────────────────────
@@ -46,9 +47,26 @@ def fetch_nepse_prices() -> list[dict]:
     print(f"📡 Fetching NEPSE prices for {date.today()}...")
     nepse = Nepse()
     nepse.setTLSVerification(False)  # NEPSE has an incomplete SSL cert chain
-    items = nepse.getPriceVolumeHistory()
+
+    # Check if market is open/data is available
+    try:
+        market_status = nepse.getMarketStatus()
+        print(f"📊 Market status: {market_status}")
+    except Exception as e:
+        print(f"⚠️  Could not fetch market status: {e}")
+
+    try:
+        items = nepse.getPriceVolumeHistory()
+    except NepseInvalidClientRequest:
+        print("⚠️  NEPSE returned no data (market may be closed or holiday). Skipping.")
+        sys.exit(0)
+
     if not isinstance(items, list):
         raise ValueError(f"Unexpected response format: {type(items)}")
+    if len(items) == 0:
+        print("⚠️  No price data returned (market closed or holiday). Skipping.")
+        sys.exit(0)
+
     print(f"✅ Fetched {len(items)} records")
     return items
 
