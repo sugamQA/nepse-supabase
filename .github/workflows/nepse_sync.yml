@@ -1,0 +1,37 @@
+name: NEPSE Daily Price Sync
+
+on:
+  # Runs Mon–Fri at 10:00 AM UTC = 3:45 PM Nepal Time (NPT is UTC+5:45)
+  # NEPSE opens 11:00 AM and closes 3:00 PM NPT; sync 45 min after close
+  schedule:
+    - cron: '0 10 * * 1-5'
+
+  # Also allows you to trigger it manually from GitHub website anytime
+  workflow_dispatch:
+
+jobs:
+  sync:
+    name: Fetch & Upload NEPSE Prices
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: '3.11'
+          cache: 'pip'
+
+      - name: Install dependencies
+        run: pip install -r requirements.txt
+
+      - name: Update CA certificates
+        run: sudo apt-get install -y ca-certificates && sudo update-ca-certificates
+
+      - name: Run NEPSE sync script
+        env:
+          SUPABASE_URL: ${{ secrets.SUPABASE_URL }}
+          SUPABASE_KEY: ${{ secrets.SUPABASE_KEY }}
+        run: python nepse_to_supabase.py
